@@ -1,8 +1,13 @@
 # A Dockerized word frequency application
 
-This application reads a text files and prints a list of words and how
-frequently they occurred in the file.  Docker wraps a small script to
-do the work.
+This application reads a text file and prints a list of words and how
+frequently they occurred in the file.  Docker wraps a small shell
+script to do the work.
+
+Real word frequency applications could be used in natural language
+processing or cryptanalysis.  This toy application at least
+illustrates some of the things a real word frequency application might
+do.
 
 ## The script
 
@@ -20,12 +25,12 @@ awk '{for (i=1; i<=NF; i++)
 ````
 
 The keys in the associative array are not ordered, so the script runs
-the output from the `awk` command through the sort utility.
+the output from the `awk` command through the `sort` utility.
 
 ## The Dockerfile
 
-The Dockerfile just adds awk to the Alpine image and copies the script
-to the container.
+The Dockerfile just adds `awk` to the Alpine Linux image and copies
+the script to the container.
 
 ````
 FROM alpine
@@ -50,7 +55,7 @@ jim@doorstop:~/wordfreq$ yes "testme" | head -1000 | docker run -i bcfdocker/wor
 1000 testme
 ````
 
-Let's try a larger file.  This is the collected works of [George
+Let's try a larger file: The collected works of [George
 Meredith](https://en.wikipedia.org/wiki/George_Meredith), a now
 somewhat obscure Victorian novelist, as collected by [Project
 Gutenberg](http://www.gutenberg.org/cache/epub/4500/pg4500.txt). The
@@ -106,4 +111,23 @@ is a word; a more serious word frequency application would have to
 address that.
 
 By the way the `2>/dev/null` redirection above is to avoid an ugly
-error message about a broken pipe.
+error message from Docker about a broken pipe.
+
+# Improvements
+
+The testing points out that a naive definition of a word leads to
+curious results, so a simple improvement would be to filter out
+nonprintable character before running `awk`.
+
+The current script also considers lowercase 'a' and uppercase 'A' two
+distinct words.  Since there are arguments both for preserving case
+and folding case, the script probably should take an option to let
+users decide which they prefer.
+
+The current script also considers, say, 'said' and 'said.' distinct
+words.  The script probably should remove punctuation, though again
+that could be an option the user could specify.
+
+The best approach might be to allow users to specify their own
+definition of a "word", though how to do that without users becoming
+experts in the Dark Art of regular expressions could be challenging.
