@@ -30,8 +30,8 @@ the output from the `awk` command through the `sort` utility.
 
 ## The Dockerfile
 
-The Dockerfile adds the GNU version of `awk` to the Alpine Linux image
-and copies the script to the container.
+The Dockerfile adds the GNU version of AWK, `gawk`, to the Alpine
+Linux image and copies the script to the container.
 
 ````
 FROM alpine
@@ -49,19 +49,19 @@ jim@doorstop:~/wordfreq$ cat /dev/null | docker run -i bcfdocker/wordfreq
 jim@doorstop:~/wordfreq$ 
 ````
 
-and for monoculture input there should be monoculture output.
+and for monoculture input, there should be monoculture output.
 
 ````
 jim@doorstop:~/wordfreq$ yes "testme" | head -1000 | docker run -i bcfdocker/wordfreq
 1000 testme
 ````
 
-Let's try something more ambitious: The collected works of [George
+Let's read something more ambitious: The collected works of [George
 Meredith](https://en.wikipedia.org/wiki/George_Meredith), a now
 obscure Victorian novelist, as collected by [Project
 Gutenberg](http://www.gutenberg.org/cache/epub/4500/pg4500.txt) in a
 15MB text file. The 25 most frequent words are, according to the
-script,
+application,
 
 ````
 jim@doorstop:~/wordfreq$ cat pg4500.txt | docker run -i bcfdocker/wordfreq 2>/dev/null | head -25
@@ -94,7 +94,7 @@ jim@doorstop:~/wordfreq$ cat pg4500.txt | docker run -i bcfdocker/wordfreq 2>/de
 which looks plausible -- except for the fifth line.  58078 of what?
 
 One guess is that it's an unprintable character that is being counted
-by the script as a word.  Using the `od` command to check that
+by the application as a word.  Using the `od` command to check that
 
 ````
 jim@doorstop:~/wordfreq$ cat pg4500.txt | docker run -i bcfdocker/wordfreq 2>/dev/null | head -25 | od -c
@@ -106,8 +106,8 @@ jim@doorstop:~/wordfreq$ cat pg4500.txt | docker run -i bcfdocker/wordfreq 2>/de
 
 shows those 58078 items are indeed unprintable carriage returns
 (`\r`).  The input file has DOS line endings, with runs of lines
-consisting of just `\r\n` pairs that the script counts as `\r`
-"words".  The script naively assumes any string of nonspace characters
+consisting of just `\r\n` pairs that the application counts as `\r`
+"words".  The application naively assumes any string of nonspace characters
 is a word; a more serious word frequency application would have to
 address that.
 
@@ -117,18 +117,18 @@ error message from Docker about a broken pipe.
 ## Improvements
 
 The testing points out that a naive definition of a word leads to
-curious results, so a simple improvement would be to filter out
-nonprintable character before running `awk`.
+curious results with nonprintable characters, so a simple improvement
+would be to filter out nonprintable character before running `awk`.
 
-The current application also considers lowercase 'a' and uppercase 'A'
-two distinct words.  Since there are arguments both for preserving
-case and folding case, the app probably should take an option to let
-users decide which they prefer.
+The current application counts lowercase 'a' and uppercase 'A' as two
+distinct words.  Since there are arguments both for preserving case
+and folding case, the app probably should take an option to let users
+decide which they prefer.
 
-The application also considers, say, 'said' and 'said.' distinct
+The application also considers, say, 'said' and 'said.' as distinct
 words.  The app probably should remove punctuation, though that could
-also be an option the user could specify.
+also be a user option.
 
 Ideally the application would let users specify their own definition
-of a word, though how to do that without requiring users to be experts
-in the Dark Art of regular expressions could be challenging.
+of a word, though it would be challenging to implement that without
+requiring users to be experts in the Dark Art of regular expressions.
