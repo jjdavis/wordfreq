@@ -1,19 +1,20 @@
 # A Dockerized word frequency application
 
 This application reads a text file and prints a list of words and how
-frequently they occurred in the file.  Docker wraps a small shell
-script to do the work.
+frequently they occur in the file.  Docker wraps a small shell script
+pipeline to do the work.
 
 Real word frequency applications could be used in natural language
 processing or cryptanalysis.  This toy application at least
-illustrates some of the things a real word frequency application might
-do.
+illustrates some of the things a serious word frequency application
+might do.
 
 ## The script
 
-It's a simple shell pipeline that uses `awk` to break input lines into
-words and store the words and the count for that word in an
-associative array.
+It's a shell pipeline that uses the
+[AWK](https://www.gnu.org/software/gawk/) programming language to
+break input lines into words and stores the words and the count for
+that word in an associative array.
 
 ````
 awk '{for (i=1; i<=NF; i++)
@@ -29,8 +30,8 @@ the output from the `awk` command through the `sort` utility.
 
 ## The Dockerfile
 
-The Dockerfile just adds `awk` to the Alpine Linux image and copies
-the script to the container.
+The Dockerfile adds the GNU version of `awk` to the Alpine Linux image
+and copies the script to the container.
 
 ````
 FROM alpine
@@ -41,25 +42,26 @@ CMD /usr/local/bin/wordfreq.sh
 
 ## Testing
 
-The app should do nothing if there is no input,
+The application should say nothing if it has nothing to say,
 
 ````
 jim@doorstop:~/wordfreq$ cat /dev/null | docker run -i bcfdocker/wordfreq
 jim@doorstop:~/wordfreq$ 
 ````
 
-and for monoculture input there should be monoculture output
+and for monoculture input there should be monoculture output.
 
 ````
 jim@doorstop:~/wordfreq$ yes "testme" | head -1000 | docker run -i bcfdocker/wordfreq
 1000 testme
 ````
 
-Let's try a larger file: The collected works of [George
+Let's try something more ambitious: The collected works of [George
 Meredith](https://en.wikipedia.org/wiki/George_Meredith), a now
-somewhat obscure Victorian novelist, as collected by [Project
-Gutenberg](http://www.gutenberg.org/cache/epub/4500/pg4500.txt). The
-25 most frequent words are, according to the script,
+obscure Victorian novelist, as collected by [Project
+Gutenberg](http://www.gutenberg.org/cache/epub/4500/pg4500.txt) in a
+15MB text file. The 25 most frequent words are, according to the
+script,
 
 ````
 jim@doorstop:~/wordfreq$ cat pg4500.txt | docker run -i bcfdocker/wordfreq 2>/dev/null | head -25
@@ -91,9 +93,8 @@ jim@doorstop:~/wordfreq$ cat pg4500.txt | docker run -i bcfdocker/wordfreq 2>/de
 ````
 which looks plausible -- except for the fifth line.  58078 of what?
 
-One guess is that it's an unprintable character that, for some reason,
-is being counted by the script as a "word".  Using the `od` command to
-check that
+One guess is that it's an unprintable character that is being counted
+by the script as a word.  Using the `od` command to check that
 
 ````
 jim@doorstop:~/wordfreq$ cat pg4500.txt | docker run -i bcfdocker/wordfreq 2>/dev/null | head -25 | od -c
@@ -113,21 +114,21 @@ address that.
 By the way the `2>/dev/null` redirection above is to avoid an ugly
 error message from Docker about a broken pipe.
 
-# Improvements
+## Improvements
 
 The testing points out that a naive definition of a word leads to
 curious results, so a simple improvement would be to filter out
 nonprintable character before running `awk`.
 
-The current script also considers lowercase 'a' and uppercase 'A' two
-distinct words.  Since there are arguments both for preserving case
-and folding case, the script probably should take an option to let
+The current application also considers lowercase 'a' and uppercase 'A'
+two distinct words.  Since there are arguments both for preserving
+case and folding case, the app probably should take an option to let
 users decide which they prefer.
 
-The current script also considers, say, 'said' and 'said.' distinct
-words.  The script probably should remove punctuation, though again
-that could be an option the user could specify.
+The application also considers, say, 'said' and 'said.' distinct
+words.  The app probably should remove punctuation, though that could
+also be an option the user could specify.
 
-The best approach might be to allow users to specify their own
-definition of a "word", though how to do that without users becoming
-experts in the Dark Art of regular expressions could be challenging.
+Ideally the application would let users specify their own definition
+of a word, though how to do that without requiring users to be experts
+in the Dark Art of regular expressions could be challenging.
